@@ -8,7 +8,7 @@ AgentDesk is a Coolify-friendly Docker Compose deployment with two services:
 ## Deployment flow
 
 1. Add the repository as a new Coolify service.
-2. Keep the root `docker-compose.yml` unchanged.
+2. Keep the root `docker-compose.yaml` unchanged. `docker-compose.yml` remains available too.
 3. Set `HTTP_USERNAME` and `HTTP_PASSWORD`.
 4. Attach the domain to `ttyd-proxy` using the internal port, for example `https://agentdesk.example.com:8080`.
 5. Deploy.

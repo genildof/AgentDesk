@@ -1,10 +1,10 @@
 # AgentDesk
 
-> Self-hosted browser workspace for AI coding agents, remote terminals, and GitOps-first development.
+> Self-hosted browser terminal for AI coding agents, remote development, and GitOps-first workflows.
 
-AgentDesk is a browser-based remote development console for Claude Code, OpenAI Codex, Hermes, OpenCode, OpenClaw, SSH workspaces, and containerized dev environments.
+AgentDesk is a self-hosted browser terminal and remote development console for Claude Code, OpenAI Codex, Hermes, OpenCode, OpenClaw, SSH workspaces, and containerized dev environments.
 
-**Security first:** this is a remote shell surface. Put it behind Cloudflare Access, VPN, MFA, or IP allowlists.
+**Security first:** this is a remote shell surface. Put it behind Cloudflare Access, VPN, MFA, or IP allowlists. Do not expose ttyd directly to the internet.
 
 ## Important Coolify Configuration
 
@@ -37,42 +37,42 @@ See [docs/COOLIFY.md](./docs/COOLIFY.md) for the validated deployment path.
 
 ## What is AgentDesk?
 
-AgentDesk is a self-hosted browser workspace for AI coding agents and remote shell workflows.
+AgentDesk is a self-hosted browser workspace, web terminal, and remote development environment for AI coding agents and remote shell workflows.
 
 It lets you:
 
-- open a shell from the browser
-- reach agent tooling from anywhere
-- keep compute on your server, VPS, or host machine
-- manage development and DevOps tasks without a full desktop
+- open a browser terminal or web terminal
+- reach agent tooling from anywhere, on any device
+- keep compute on your server, VPS, container host, or home lab
+- manage development, DevOps, and remote administration without a full desktop
 
-The root `docker-compose.yml` in this repo is a working Coolify-friendly deployment.
+The root `docker-compose.yaml` is the file Coolify looks for in this repo. The matching `docker-compose.yml` is kept alongside it for compatibility.
 
 ## Why AgentDesk?
 
-Developers increasingly use terminal-native agents, but they still need a safe way to reach those tools from any device. AgentDesk makes that practical without depending on a hosted IDE or carrying a laptop everywhere.
+Developers increasingly use terminal-native AI coding agents, but they still need a safe way to access those tools from a browser, tablet, or lightweight device. AgentDesk is a self-hosted alternative that makes browser-based remote development practical without depending on a hosted IDE or carrying a laptop everywhere.
 
 ## Why this exists
 
-You may have a powerful machine, a VPS, or a home lab, but you still want to interact with it safely from a browser. AgentDesk turns that into a clean, self-hosted workflow for coding agents and operational work.
+You may have a powerful machine, a VPS, a home lab, or a Kubernetes node, but you still want to interact with it safely from a browser. AgentDesk turns that into a clean, self-hosted remote development workflow for coding agents, SSH access, and operational work.
 
 ## Who is it for?
 
-- Developers using Claude Code, Codex, Hermes, OpenCode, or OpenClaw
-- DevOps and platform engineers
-- VPS and home lab users
-- Teams that prefer self-hosted infrastructure
+- Developers using Claude Code, OpenAI Codex, Hermes, OpenCode, or OpenClaw
+- DevOps, platform, and infrastructure engineers
+- VPS, bare metal, and home lab users
+- Teams that prefer self-hosted infrastructure over SaaS cloud IDEs
 - People who want to code from an iPad, phone, Chromebook, or travel laptop
 
 ## Features
 
-- Browser-accessible remote console
-- Coolify-friendly deployment
-- Traefik-compatible routing
-- Caddy as an internal proxy
-- GitOps-first workflow
+- Browser-accessible remote console and browser terminal
+- Coolify-friendly deployment with Docker Compose
+- Traefik-compatible routing behind an authenticated edge
+- Caddy as an internal reverse proxy bridge
+- GitOps-first workflow for remote development
 - SSH and containerized workspace support
-- Designed for secure self-hosting
+- Designed for secure self-hosting and private access
 
 ## Architecture
 
@@ -87,7 +87,7 @@ See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the full diagram.
 ## Quick Start with Coolify
 
 1. Add this repository as a new service in Coolify.
-2. Keep the root [`docker-compose.yml`](./docker-compose.yml) in place.
+2. Keep the root [`docker-compose.yaml`](./docker-compose.yaml) in place. `docker-compose.yml` remains available too.
 3. Set `HTTP_USERNAME` and `HTTP_PASSWORD`.
 4. Attach the domain to `ttyd-proxy` using `https://agentdesk.example.com:8080`.
 5. Deploy.
@@ -127,15 +127,15 @@ Required:
 
 ## Security Model
 
-AgentDesk is intentionally not a public shell endpoint.
+AgentDesk is intentionally not a public shell endpoint or public ttyd instance.
 
 Recommended controls:
 
-- Cloudflare Access
+- Cloudflare Access for identity-aware access
 - VPN
 - MFA
 - IP allowlists
-- authenticated reverse proxying
+- authenticated reverse proxying in front of ttyd
 
 Do not expose root shells publicly without extra protection. Prefer non-root workspaces whenever possible.
 
@@ -147,13 +147,13 @@ If AgentDesk is reachable from the internet, place Cloudflare Access in front of
 
 ## GitHub / GitOps Workflow
 
-AgentDesk fits a GitOps-first workflow:
+AgentDesk fits a GitOps-first workflow for self-hosted remote development:
 
 - change config in Git
 - push to your repo
 - let Coolify redeploy
-- keep runtime secrets in environment variables
-- treat the workspace as infrastructure
+- keep runtime secrets in environment variables and never commit them
+- treat the workspace as infrastructure, not a local-only snowflake machine
 
 ```bash
 git clone <your-fork-or-origin>
@@ -168,11 +168,11 @@ git push
 
 ## Deploy in Coolify
 
-The current stack is intentionally small:
+The current stack is intentionally small and works well for Coolify browser terminal deployments:
 
 - `ttydbridge` provides the terminal backend
 - `ttyd-proxy` provides the internal Caddy bridge
-- Coolify/Traefik handles public routing
+- Coolify/Traefik handles public routing for the browser workspace
 
 Use the root compose file as-is unless you are intentionally changing the deployment model.
 
@@ -183,7 +183,7 @@ Use the root compose file as-is unless you are intentionally changing the deploy
 - Use Hermes from a browser session
 - Work from an iPad or phone
 - Manage SSH workspaces while traveling
-- Operate a browser terminal on a VPS or home lab
+- Operate a browser terminal on a VPS, home lab, or bare metal server
 - Run DevOps tasks without exposing a raw shell
 
 ## Roadmap
