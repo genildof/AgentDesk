@@ -100,15 +100,18 @@ https://agentdesk.example.com:8080
 
 ## Health and routing
 
-AgentDesk intentionally healthchecks only the proxy layer.
+Coolify can show two different states here:
 
-The proxy is sufficient to determine availability.
+- `Running (unknown)` means no effective healthcheck is being evaluated.
+- `Running (unhealthy)` means a healthcheck exists but is failing.
 
-Healthchecking `ttydbridge` directly may produce false negatives, especially when authentication or request handling changes the response behavior.
+AgentDesk should healthcheck `ttyd-proxy` on port `8080` only.
 
-- `ttyd-proxy` healthcheck probes `http://127.0.0.1:8080/` with a lightweight spider request.
-- `ttydbridge` is not healthchecked directly.
-- Authentication stays enabled; the proxy healthcheck does not need credentials.
+`ttydbridge` should not be healthchecked directly because that can produce false negatives.
+
+- `ttyd-proxy` healthcheck probes `http://127.0.0.1:8080/`
+- `ttydbridge` is not healthchecked directly
+- Authentication stays enabled; the proxy healthcheck does not need credentials
 
 ## Common 502 / 504 troubleshooting
 
