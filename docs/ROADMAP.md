@@ -1,36 +1,30 @@
 # Roadmap
 
-## v0.1: Working remote console
+## v0.2: DEFAULT_USER
 
-- preserve the working Coolify-compatible compose deployment
-- provide browser access to a remote shell
-- document the security model clearly
+- add default user selection support to the developer workflow
+- document the preferred account-switching pattern
+- keep privileged shell startup behavior unchanged
 
-## v0.2: Non-root dev workspace
+## v0.3: workspace bootstrap
 
-- add a safer default workspace model
-- avoid privileged shells where possible
-- document user, permission, and filesystem boundaries
+- document a repeatable developer environment bootstrap flow
+- standardize common tools for AgentDesk development
+- make new workspaces easier to prepare
 
-## v0.3: Containerized agent workspace
+## v0.4: containerized workspaces
 
-- package a repeatable container workspace for agent workflows
-- standardize common tools and shell entrypoints
-- make it easier to launch reproducible tasks
+- support containerized developer workspaces
+- improve isolation between agent environments
+- make workspace provisioning more reproducible
 
-## v0.4: Prebuilt Docker image
+## v0.5: multi-agent launcher
 
-- publish a prebuilt image for faster deployment
-- reduce friction for Coolify and plain Docker installs
-- document versioning and upgrade strategy
+- support multiple agent launch profiles
+- make it easier to switch between Codex, Claude Code, Hermes, OpenCode, and OpenClaw
+- improve workspace selection and isolation
 
-## v0.5: Multi-agent workspace launcher
-
-- support multiple agent profiles or launch modes
-- make it easier to switch between Claude Code, Codex, Hermes, OpenCode, and OpenClaw workflows
-- improve workspace isolation and selection
-
-## v1.0: Secure self-hosted AgentDesk platform
+## v1.0: AI-native self-hosted Codespaces
 
 - stable deployment story
 - clearer security defaults

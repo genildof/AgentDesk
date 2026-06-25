@@ -6,7 +6,7 @@ Thanks for helping improve AgentDesk.
 
 - Keep changes honest and practical.
 - Do not add fake metrics, fake production claims, or unsupported compatibility claims.
-- Preserve the working root `docker-compose.yml` unless the change is intentionally about deployment.
+- Preserve the working root `docker-compose.yaml` unless the change is intentionally about deployment.
 - Document security implications for anything that exposes a shell or browser workspace.
 - Prefer small, reviewable pull requests.
 

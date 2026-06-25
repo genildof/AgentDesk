@@ -14,6 +14,14 @@ services:
       - '8080'
     networks:
       - coolify
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -S -O /dev/null http://127.0.0.1:8080 2>&1 | grep -E 'HTTP/.* (200|401|403)' || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     labels:
       - traefik.enable=true
       - traefik.docker.network=coolify
@@ -34,6 +42,8 @@ services:
       EXEC_DIR: /opt
       START_COMMAND: bash
       ENABLE_SSL: 'false'
+      DEFAULT_USER: '${DEFAULT_USER:-}'
+      DEFAULT_WORKSPACE: '${DEFAULT_WORKSPACE:-}'
       HTTP_USERNAME: '${HTTP_USERNAME}'
       HTTP_PASSWORD: '${HTTP_PASSWORD}'
     volumes:
@@ -42,6 +52,14 @@ services:
       - '2222'
     networks:
       - coolify
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -S -O /dev/null http://127.0.0.1:$${PORT:-2222} 2>&1 | grep -E 'HTTP/.* (200|401|403)' || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 networks:
   coolify:
     external: true
