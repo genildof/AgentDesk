@@ -1,31 +1,22 @@
 # Deploying AgentDesk on Coolify
 
-AgentDesk is designed to work with a Coolify-managed Docker Compose deployment.
+AgentDesk is a Coolify-friendly Docker Compose deployment with two services:
+
+- `ttydbridge` runs `ttyd`
+- `ttyd-proxy` runs Caddy
 
 ## Deployment flow
 
-1. Add the repository to Coolify as a new service.
-2. Keep the root `docker-compose.yml` unchanged unless you are intentionally modifying the runtime.
-3. Configure the required environment variables:
-   - `HTTP_USERNAME`
-   - `HTTP_PASSWORD`
-4. Assign the domain to `ttyd-proxy`, using the internal container port, for example `https://agentdesk.example.com:8080`.
-5. Deploy the stack.
-6. End users will access `https://agentdesk.example.com`.
-
-## Domain routing
-
-Coolify and Traefik should route external traffic to the internal Caddy service.
-
-In this repository, the external host is handled by Traefik labels on `ttyd-proxy`, while Caddy forwards traffic to the `ttydbridge` backend on the host gateway.
+1. Add the repository as a new Coolify service.
+2. Keep the root `docker-compose.yml` unchanged.
+3. Set `HTTP_USERNAME` and `HTTP_PASSWORD`.
+4. Attach the domain to `ttyd-proxy` using the internal port, for example `https://agentdesk.example.com:8080`.
+5. Deploy.
+6. Users access `https://agentdesk.example.com`.
 
 ## Why the domain points to the proxy
 
-Traefik -> Caddy -> ttydbridge is the validated path for this deployment.
-
-Traefik cannot reliably reach `ttydbridge` directly in this setup.
-
-Caddy acts as an internal bridge between Coolify/Traefik and the backend shell service.
+The validated path is:
 
 ```text
 Internet
@@ -42,51 +33,54 @@ ttydbridge (:2222)
 Workspace / Host
 ```
 
+Traefik routes to `ttyd-proxy`, and Caddy bridges traffic to `ttydbridge`.
+
+Traefik cannot reliably reach `ttydbridge` directly in this setup.
+
 > ⚠️ This is the single most common cause of AgentDesk deployment failures.
 
-Do not simplify or bypass this path unless you are intentionally redesigning the deployment model.
+Do not attach the domain to `ttydbridge`.
 
 ## Port mapping
 
-Current internal flow:
-
 - Traefik exposes the public entry point
-- Caddy listens on `:8080` inside the proxy container
+- Caddy listens on `:8080`
 - Caddy forwards to `host.docker.internal:2222`
-- `ttydbridge` listens on port `2222`
+- `ttydbridge` listens on `2222`
 
-## Why Caddy is used as an internal proxy
+## Common Coolify mistakes
 
-Caddy acts as a small internal reverse proxy between Coolify/Traefik and the shell backend.
+Wrong:
 
-Benefits:
+```text
+ttydbridge
+https://agentdesk.example.com
+```
 
-- simple config
-- predictable reverse proxy behavior
-- easy health verification
-- a clean separation between edge routing and backend access
+Correct:
+
+```text
+ttyd-proxy
+https://agentdesk.example.com:8080
+```
+
+Do not expose `:8080` publicly.
 
 ## Common 502 / 504 troubleshooting
 
-If you see 502 or 504 responses:
+If you see `502`, `504`, or `Connection refused`:
 
-- confirm the domain points to `ttyd-proxy`, not `ttydbridge`
-- confirm the Coolify domain uses `:8080` on the proxy service
+- confirm the domain is attached to `ttyd-proxy`
+- confirm the Coolify domain uses `:8080`
 - confirm Traefik labels are correct
-- confirm Caddy is starting successfully
-- confirm `ttydbridge` is running and listening on `2222`
+- confirm Caddy starts successfully
+- confirm `ttydbridge` is listening on `2222`
 - confirm the host gateway is reachable from the proxy container
-- confirm your firewall allows the relevant inbound path
-
-Common failure modes include:
-
-- `502 Bad Gateway`
-- `504 Gateway Timeout`
-- `Connection refused`
+- confirm firewall rules allow the intended path
 
 ## Confirm backend reachability
 
-Use `curl` or `wget` from a shell on the host or from a container with network visibility:
+Use `curl` or `wget` from the host or from a container with network visibility:
 
 ```bash
 curl -v http://127.0.0.1:8080
@@ -94,8 +88,8 @@ curl -v http://host.docker.internal:2222
 wget -S -O - http://127.0.0.1:8080
 ```
 
-If the proxy is healthy but the backend is not reachable, check the `ttydbridge` container logs and the host-side service state.
+If the proxy is healthy but the backend is not reachable, check `ttydbridge` logs and host-side service state.
 
 ## Practical note
 
-The working compose file currently depends on the existing Coolify network and routing behavior. Preserve that model unless you are intentionally redesigning the deployment.
+The current compose file depends on the existing Coolify network and routing behavior. Preserve that model unless you are intentionally redesigning the deployment.
