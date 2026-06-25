@@ -127,13 +127,14 @@ Example:
 ```text
 /home/<user>/
   workspace/
-    cognivanta/
-      AgentDesk/
-      Agent_Agency/
-      autonomous-media-pipeline/
-    company/
+    projects/
       project-a/
       project-b/
+    opensource/
+      AgentDesk/
+      my-library/
+    clients/
+      client-a/
     lab/
       poc/
       scratch/

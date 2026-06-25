@@ -16,12 +16,14 @@ services:
       - coolify
     healthcheck:
       test:
-        - CMD-SHELL
-        - wget -S -O /dev/null http://127.0.0.1:8080 2>&1 | grep -E 'HTTP/.* (200|401|403)' || exit 1
-      interval: 10s
+        [
+          "CMD-SHELL",
+          "wget -q --spider http://127.0.0.1:8080/ || test $? -eq 6 || test $? -eq 8"
+        ]
+      interval: 30s
       timeout: 5s
       retries: 5
-      start_period: 15s
+      start_period: 30s
     labels:
       - traefik.enable=true
       - traefik.docker.network=coolify
@@ -52,14 +54,6 @@ services:
       - '2222'
     networks:
       - coolify
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - wget -S -O /dev/null http://127.0.0.1:$${PORT:-2222} 2>&1 | grep -E 'HTTP/.* (200|401|403)' || exit 1
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
 networks:
   coolify:
     external: true

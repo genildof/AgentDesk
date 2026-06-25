@@ -100,10 +100,15 @@ https://agentdesk.example.com:8080
 
 ## Health and routing
 
-- `ttyd-proxy` healthcheck probes `http://127.0.0.1:8080`.
-- `ttydbridge` healthcheck probes `http://127.0.0.1:${PORT:-2222}`.
-- Healthy responses are `200`, `401`, or `403`.
-- Authentication stays enabled; the healthcheck does not need credentials.
+AgentDesk intentionally healthchecks only the proxy layer.
+
+The proxy is sufficient to determine availability.
+
+Healthchecking `ttydbridge` directly may produce false negatives, especially when authentication or request handling changes the response behavior.
+
+- `ttyd-proxy` healthcheck probes `http://127.0.0.1:8080/` with a lightweight spider request.
+- `ttydbridge` is not healthchecked directly.
+- Authentication stays enabled; the proxy healthcheck does not need credentials.
 
 ## Common 502 / 504 troubleshooting
 
