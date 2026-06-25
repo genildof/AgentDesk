@@ -318,7 +318,7 @@ Self-hosted browser workspace, remote development console, browser terminal, web
 
 AgentDesk is an independent open-source project built to help developers run AI coding agents securely from anywhere.
 
-If AgentDesk saves you time, helps you work without carrying a laptop, or inspires your own setup, consider supporting the project.
+If AgentDesk helped you leave your laptop at home, code from a tablet, recover a few hours of your week, or inspired your own setup, consider supporting its development.
 
 <a href="https://www.buymeacoffee.com/genildof" target="_blank">
 <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
@@ -343,7 +343,7 @@ width="180">
 
 AgentDesk stands on the shoulders of great open-source projects.
 
-Special thanks to Cp0204 for ttydBridge, which served as one of the foundational building blocks that inspired AgentDesk. See [ttydBridge](https://github.com/Cp0204/ttydBridge).
+Special thanks to Cp0204 for ttydBridge, which inspired and enabled parts of AgentDesk's remote shell architecture. See [ttydBridge](https://github.com/Cp0204/ttydBridge).
 
 ## License
 
@@ -352,3 +352,7 @@ See [LICENSE](./LICENSE).
 ---
 
 Built with ❤️ for developers running AI agents from anywhere.
+
+⭐ If AgentDesk was useful, consider starring the repository.
+
+☕ Support the project: https://buymeacoffee.com/genildof
