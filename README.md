@@ -93,11 +93,65 @@ See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the diagram and component
 3. Set your environment variables:
    - `HTTP_USERNAME`
    - `HTTP_PASSWORD`
-4. Assign your domain in Coolify, for example `agentdesk.example.com`.
+4. Assign your domain in Coolify to `ttyd-proxy`, using the internal container port, for example `https://agentdesk.example.com:8080`.
 5. Deploy.
-6. Put Cloudflare Access, VPN, or another authenticated edge in front of it.
+6. Users will access `https://agentdesk.example.com`.
+7. Put Cloudflare Access, VPN, or another authenticated edge in front of it.
 
 If you need a step-by-step deployment guide, see [docs/COOLIFY.md](./docs/COOLIFY.md).
+
+## Important Coolify Configuration
+
+AgentDesk consists of two containers:
+
+- `ttydbridge` runs `ttyd`
+- `ttyd-proxy` runs Caddy
+
+Coolify MUST point the domain to `ttyd-proxy`.
+
+Example:
+
+```text
+Service:
+ttyd-proxy
+
+Domain:
+https://agentdesk.example.com:8080
+```
+
+End users access:
+
+```text
+https://agentdesk.example.com
+```
+
+Do not attach domains to `ttydbridge`.
+
+Do not expose `:8080` publicly.
+
+Doing so will likely produce:
+
+- `502 Bad Gateway`
+- `504 Gateway Timeout`
+- `Connection refused`
+
+> ⚠️ Important: If you get 502/504 errors on Coolify, ensure your domain is attached to `ttyd-proxy` with `:8080`, not to `ttydbridge`.
+
+## Common Coolify Mistakes
+
+Wrong:
+
+```text
+ttydbridge
+https://agentdesk.example.com
+```
+
+Correct:
+
+```text
+ttyd-proxy
+https://agentdesk.example.com:8080
+```
 
 ## Environment Variables
 
