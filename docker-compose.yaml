@@ -15,7 +15,7 @@ services:
     networks:
       - coolify
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/ || [ $$? -eq 8 ]"]
+      test: ["CMD-SHELL", "timeout 3 sh -c '</dev/tcp/127.0.0.1/8080'"]
       interval: 30s
       timeout: 5s
       retries: 5
