@@ -15,7 +15,7 @@ services:
     networks:
       - coolify
     healthcheck:
-      test: ["CMD-SHELL", "wget -S -O /dev/null http://127.0.0.1:8080/ 2>&1 | grep -E 'HTTP/.* (200|401|403)' >/dev/null"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/ || [ $$? -eq 8 ]"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -23,7 +23,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=coolify
-      - traefik.http.routers.ttyd-proxy.rule=Host(`ttyd.spi-analytics.cloudns.nz`)
+      - traefik.http.routers.ttyd-proxy.rule=Host(`${DOMAIN}`)
       - traefik.http.routers.ttyd-proxy.entrypoints=https
       - traefik.http.routers.ttyd-proxy.tls=true
       - traefik.http.routers.ttyd-proxy.priority=999999
@@ -42,6 +42,7 @@ services:
       ENABLE_SSL: 'false'
       DEFAULT_USER: '${DEFAULT_USER:-}'
       DEFAULT_WORKSPACE: '${DEFAULT_WORKSPACE:-}'
+      DOMAIN: '${DOMAIN:-agentdesk.example.com}'
       HTTP_USERNAME: '${HTTP_USERNAME}'
       HTTP_PASSWORD: '${HTTP_PASSWORD}'
     volumes:

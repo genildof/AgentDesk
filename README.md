@@ -1,359 +1,249 @@
 # AgentDesk
 
-> Self-hosted browser terminal for AI coding agents, remote development, and GitOps-first workflows.
+> Self-hosted Codespaces for AI coding agents. Run Claude Code, OpenAI Codex, Hermes, OpenCode, or OpenClaw from any browser, tablet, or locked-down workstation.
 
-AgentDesk is a self-hosted browser terminal and remote development console for Claude Code, OpenAI Codex, Hermes, OpenCode, OpenClaw, SSH workspaces, and containerized dev environments.
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](#quick-start)
+[![Coolify](https://img.shields.io/badge/Coolify-friendly-111827)](docs/COOLIFY.md)
+[![Self-hosted](https://img.shields.io/badge/self--hosted-yes-16a34a)](#why-agentdesk)
+[![Security](https://img.shields.io/badge/security-authenticated%20edge-critical)](docs/SECURITY.md)
 
-**Security warning:** AgentDesk is privileged infrastructure. Never deploy it without `HTTP_USERNAME` and `HTTP_PASSWORD`. Put it behind Cloudflare Access, VPN, MFA, or IP allowlists whenever possible.
+AgentDesk is a browser workspace for coding agents and terminal-native developer workflows. It gives you a remote developer workspace with SSH in the browser, Docker-based deployment, and a GitOps-friendly path for running AI coding agents on your own VPS, homelab, or lab server.
 
-## What is AgentDesk?
+Use it when you want to:
 
-AgentDesk is a self-hosted browser workspace, web terminal, and remote development environment for AI coding agents and remote shell workflows.
+- run Claude Code in a browser
+- use OpenAI Codex from an iPad or tablet
+- access Hermes, OpenCode, or OpenClaw remotely
+- keep a persistent Docker workspace on your own infrastructure
+- expose a browser terminal through Coolify, Traefik, Cloudflare Access, Tailscale, or a VPN
+- create a self-hosted AI workstation without adopting a full cloud IDE platform
 
-It lets you:
+## Why AgentDesk
 
-- open a browser terminal or web terminal
-- reach agent tooling from anywhere, on any device
-- keep compute on your server, VPS, container host, or home lab
-- manage development, DevOps, and remote administration without a full desktop
+Most browser IDEs assume the editor is the product. AgentDesk assumes the agent and terminal are the product.
 
-The canonical Coolify file is [`docker-compose.yaml`](./docker-compose.yaml).
+AgentDesk keeps the runtime simple: Coolify or Traefik routes to a Caddy proxy, Caddy forwards to ttydBridge, and ttydBridge attaches to a host shell. The result is a browser terminal for serious AI-assisted development without hiding the machine from you.
 
-## Why AgentDesk?
+## Architecture
 
-Developers increasingly use terminal-native AI coding agents, but they still need a safe way to access those tools from a browser, tablet, or lightweight device. AgentDesk is a self-hosted alternative for browser-based remote development without a hosted IDE.
+```text
+Browser
+  -> Coolify / Traefik
+  -> ttyd-proxy on port 8080
+  -> Caddy
+  -> host.docker.internal:2222
+  -> ttydbridge
+  -> host shell
+```
 
-## Why this exists
-
-You may have a powerful machine, a VPS, a home lab, or a Kubernetes node, but you still want to interact with it safely from a browser. AgentDesk turns that into a clean, self-hosted remote development workflow for coding agents, SSH access, and operational work.
-
-## Who is it for?
-
-- Developers using Claude Code, OpenAI Codex, Hermes, OpenCode, or OpenClaw
-- DevOps, platform, and infrastructure engineers
-- VPS, bare metal, and home lab users
-- Teams that prefer self-hosted infrastructure over SaaS cloud IDEs
-- People who want to code from an iPad, phone, Chromebook, or travel laptop
+The working compose file is [`docker-compose.yaml`](./docker-compose.yaml). Do not rename it to `docker-compose.yml` in docs, automation, or examples.
 
 ## Features
 
-- Browser-accessible remote console and browser terminal
-- Coolify-friendly deployment with Docker Compose
-- Traefik-compatible routing behind an authenticated edge
-- Caddy as an internal reverse proxy bridge
-- GitOps-first workflow for remote development
-- SSH and containerized workspace support
-- Designed for secure self-hosting and private access
+- Browser terminal for Claude Code, OpenAI Codex, Hermes, OpenCode, OpenClaw, shell tools, and Git workflows.
+- Coolify-friendly Docker Compose deployment using [`docker-compose.yaml`](./docker-compose.yaml).
+- Works from laptops, tablets, iPad, Chromebooks, and restricted corporate devices with a modern browser.
+- Persistent host workspace mounted into the remote session.
+- Useful for VPS development, homelab automation, client environments, DevOps labs, and AI agent workstations.
+- Simple enough to audit: Caddy, ttydBridge, Docker, and your existing host shell.
 
-## Important Coolify Configuration
+## Quick Start
 
-AgentDesk uses two containers:
-
-- `ttydbridge` runs `ttyd`
-- `ttyd-proxy` runs Caddy
-
-Coolify must attach the public domain to `ttyd-proxy`, not to `ttydbridge`.
-
-Example:
-
-```text
-Service:
-ttyd-proxy
-
-Domain:
-https://agentdesk.example.com:8080
-```
-
-Users access:
-
-```text
-https://agentdesk.example.com
-```
-
-Do not attach the public domain to `ttydbridge`. Do not expose `:8080` publicly.
-
-## Recommended Developer Workflow
-
-AgentDesk intentionally starts as a privileged shell.
-
-That is useful for infrastructure administration and host-level recovery work.
-
-For software development, switch to the account where your AI tools and workspace live.
-
-Examples:
+1. Clone the repository.
 
 ```bash
-su - <developer-user>
+git clone https://github.com/genildof/AgentDesk.git
+cd AgentDesk
+```
+
+2. Create your environment file.
+
+```bash
+cp .env.example .env
+```
+
+3. Review the values in `.env` and deploy with Coolify or Docker Compose.
+
+```bash
+docker compose -f docker-compose.yaml up -d
+```
+
+4. Open your configured domain and sign in through your edge protection or configured authentication.
+
+For Coolify-specific setup, read [docs/COOLIFY.md](./docs/COOLIFY.md).
+
+## Domain Configuration
+
+AgentDesk uses the `DOMAIN` environment variable for the Traefik host rule in [`docker-compose.yaml`](./docker-compose.yaml). Set it to the hostname users will open in their browser.
+
+```bash
+DOMAIN=my-agentdesk.example.com
+```
+
+Common examples:
+
+```bash
+DOMAIN=agentdesk.example.com
+DOMAIN=agentdesk.internal
+DOMAIN=agentdesk.company.com
+```
+
+Coolify example:
+
+```text
+Environment variable: DOMAIN=agentdesk.example.com
+Public domain: https://agentdesk.example.com
+Service: ttyd-proxy
+Port: 8080
+```
+
+## Common Workflows
+
+Start a coding agent from the browser terminal:
+
+```bash
+cd ~/workspace
+claude
+```
+
+```bash
 cd ~/workspace
 codex
 ```
 
-or:
-
 ```bash
-su - <developer-user>
-claude
-```
-
-or:
-
-```bash
-su - <developer-user>
+cd ~/workspace
 hermes
 ```
 
-or:
-
 ```bash
-su - <developer-user>
+cd ~/workspace
 opencode
 ```
 
-Benefits:
-
-- preserves ssh keys
-- preserves git credentials
-- preserves codex configs
-- preserves claude configs
-- avoids development as root
-- reduces accidental host modifications
-
-## Recommended Workspace Layout
-
-Users are free to customize their own layout. This is only a recommended structure.
-
-Example:
+Use separate project folders for different workstreams:
 
 ```text
-/home/<user>/
-  workspace/
-    projects/
-      project-a/
-      project-b/
-    opensource/
-      AgentDesk/
-      my-library/
-    clients/
-      client-a/
-    lab/
-      poc/
-      scratch/
-  sandbox/
-  .ssh/
-  .codex/
-  .claude/
-  .hermes/
-  .local/
-  .config/
+~/workspace/
+  project-a/
+  project-b/
+  clients/
+  opensource/
+  lab/
 ```
-
-## Security Warning
-
-- Never deploy AgentDesk without `HTTP_USERNAME` and `HTTP_PASSWORD`.
-- Never commit real passwords.
-- Rotate passwords if they appear in logs.
-- Put AgentDesk behind Cloudflare Access, VPN, MFA, or IP allowlists whenever possible.
-- Treat AgentDesk as privileged infrastructure because it can expose shell access through the browser.
-- Configure `HTTP_USERNAME` and `HTTP_PASSWORD` in Coolify environment variables, not hardcoded in `docker-compose.yaml`.
-
-## Port Usage
-
-- `ttydbridge` listens on host port `2222` by default.
-- `ttydbridge` uses `pid: host` and binds to the host network namespace, so only one AgentDesk instance can use `PORT=2222` on the same server.
-- If you deploy multiple AgentDesk instances on the same host, use different `ttydbridge` ports:
-  - production: `2222`
-  - test: `2223`
-  - staging: `2224`
-- `ttyd-proxy` / Caddy listens internally on port `8080`.
-- In Coolify, attach the public domain to `ttyd-proxy` with `:8080`.
-- Example: `https://agentdesk.example.com:8080`
-- Users access: `https://agentdesk.example.com`
-
-## Troubleshooting
-
-Symptoms:
-
-- `502 Bad Gateway`
-- `504 Gateway Timeout`
-- `connection refused`
-- `lws_socket_bind ERROR on binding fd 12 to port 2222 (-1 98)`
-
-What it means:
-
-- `lws_socket_bind` with code `98` means the `ttydbridge` port is already in use.
-- This usually happens when another AgentDesk or `ttyd` instance is already running on the same host port.
-
-Fix:
-
-- change `PORT` to `2223`, `2224`, or another free port
-- update the Caddy `reverse_proxy` target to match the new host port
-- keep the Coolify domain attached to `ttyd-proxy`, not `ttydbridge`
-
-See [docs/COOLIFY.md](./docs/COOLIFY.md) for the validated deployment path.
-
-## Environment Variables
-
-Copy the example file and edit it:
-
-```bash
-cp .env.example .env
-```
-
-Required:
-
-- `HTTP_USERNAME`
-- `HTTP_PASSWORD`
-
-These must be configured in Coolify environment variables. Do not hardcode them in `docker-compose.yaml`.
-
-Optional:
-
-- `DEFAULT_USER`
-- `DEFAULT_WORKSPACE`
-
-Recommended:
-
-- `DEFAULT_USER=<developer-user>`
-- `DEFAULT_WORKSPACE=/home/<developer-user>/workspace`
 
 ## Security Model
 
-AgentDesk is intentionally not a public shell endpoint or public `ttyd` instance.
+AgentDesk exposes a shell. Treat it like SSH in a browser.
 
 Recommended controls:
 
-- Cloudflare Access for identity-aware access
-- VPN
-- MFA
-- IP allowlists
-- authenticated reverse proxying in front of `ttyd`
+- Put AgentDesk behind Cloudflare Access, Tailscale, WireGuard, a VPN, or another authenticated edge.
+- Use HTTPS at the edge.
+- Use strong credentials when HTTP authentication is enabled.
+- Run day-to-day work as a non-root user.
+- Do not expose the service unauthenticated on the public internet.
 
-Do not expose root shells publicly without extra protection. Prefer non-root workspaces whenever possible.
+Read the full security guidance in [docs/SECURITY.md](./docs/SECURITY.md).
 
-See [docs/SECURITY.md](./docs/SECURITY.md).
+## Documentation
 
-## GitHub / GitOps Workflow
-
-AgentDesk fits a GitOps-first workflow for self-hosted remote development:
-
-- change config in Git
-- push to your repo
-- let Coolify redeploy
-- keep runtime secrets in environment variables and never commit them
-- treat the workspace as infrastructure, not a local-only snowflake machine
-
-```bash
-git clone <your-fork-or-origin>
-cd AgentDesk
-cp .env.example .env
-# edit .env
-
-git add .
-git commit -m "Update AgentDesk"
-git push
-```
-
-## Deploy in Coolify
-
-The current stack is intentionally small and works well for Coolify browser terminal deployments:
-
-- `ttydbridge` provides the terminal backend
-- `ttyd-proxy` provides the internal Caddy bridge
-- Coolify/Traefik handles public routing for the browser workspace
-
-Use [`docker-compose.yaml`](./docker-compose.yaml) as the canonical compose file.
-
-## Use Cases
-
-- Run Claude Code in a browser
-- Access OpenAI Codex remotely
-- Use Hermes from a browser session
-- Work from an iPad or phone
-- Manage SSH workspaces while traveling
-- Operate a browser terminal on a VPS, home lab, or bare metal server
-- Run DevOps tasks without exposing a raw shell
-
-## Roadmap
-
-See [docs/ROADMAP.md](./docs/ROADMAP.md).
+- [Architecture](./docs/ARCHITECTURE.md): how requests flow from the browser to the host shell.
+- [Coolify deployment](./docs/COOLIFY.md): deployment, routing, and troubleshooting notes.
+- [Bootstrap guide](./docs/BOOTSTRAP.md): preparing a host for AI coding agents and developer tools.
+- [Security](./docs/SECURITY.md): recommended controls and threat model.
+- [Roadmap](./docs/ROADMAP.md): planned improvements and repository growth ideas.
+- [Contributing](./CONTRIBUTING.md): how to propose changes without breaking the runtime architecture.
 
 ## FAQ
 
 ### How do I run Claude Code in a browser?
 
-Deploy AgentDesk, protect it with an authenticated edge, and use the browser console to reach your remote shell.
+Deploy AgentDesk, open the browser terminal, move into your workspace, and run `claude`. AgentDesk provides the remote browser shell; Claude Code runs inside your host environment.
 
 ### How do I access OpenAI Codex remotely?
 
-Expose AgentDesk through Coolify, then put Cloudflare Access, VPN, MFA, or IP allowlists in front of it.
+Open AgentDesk from your browser, authenticate through your configured edge, and run `codex` in the terminal. This is useful for using Codex from an iPad, tablet, Chromebook, or workstation where local setup is inconvenient.
 
-### Can I use AgentDesk with Hermes?
+### Can I use AgentDesk from an iPad?
 
-Yes. If Hermes runs in a terminal or containerized workspace, AgentDesk can provide browser access to it.
+Yes. AgentDesk is designed for browser access, so an iPad can connect to your remote developer workspace and run terminal-native AI coding agents.
 
-### Can I deploy AgentDesk with Coolify?
+### Can I run Hermes on a VPS?
 
-Yes. This repo is built around a working Coolify-friendly Docker Compose deployment.
+Yes. Install Hermes on the host, deploy AgentDesk with [`docker-compose.yaml`](./docker-compose.yaml), and start `hermes` inside the browser terminal.
 
-### Is AgentDesk a replacement for GitHub Codespaces?
+### Can I expose ttyd securely?
 
-No. It is a self-hosted browser workspace and remote console. It can cover similar workflows, but it is centered on your own infrastructure.
+Yes, but do not expose it directly without authentication. Put AgentDesk behind an authenticated edge such as Cloudflare Access, Tailscale, WireGuard, a VPN, or a trusted reverse proxy with HTTPS and access control.
 
-### Should I expose ttyd directly to the internet?
+### Can AgentDesk replace GitHub Codespaces?
 
-No. Keep it behind an authenticated reverse proxy and additional perimeter controls.
+AgentDesk can replace Codespaces for terminal-first workflows where you want your own host, persistent workspace, and AI coding agents in a browser. It is not a full hosted IDE marketplace and does not try to manage ephemeral cloud workspaces for you.
 
-### Can I use AgentDesk from an iPad or phone?
+### Can I use AgentDesk with Coolify?
 
-Yes. That is one of the core use cases.
+Yes. AgentDesk is designed to deploy cleanly through Coolify using [`docker-compose.yaml`](./docker-compose.yaml). See [docs/COOLIFY.md](./docs/COOLIFY.md).
+
+### How do I use SSH in a browser?
+
+AgentDesk gives you an SSH-like browser terminal that reaches a host shell through ttydBridge. Protect it like SSH: authenticate at the edge, use HTTPS, and restrict who can connect.
+
+### Can AgentDesk host multiple AI agents?
+
+Yes. You can run different terminal-native agents, such as Claude Code, Codex, Hermes, OpenCode, or OpenClaw, from the same workspace. For isolated teams or projects, deploy separate instances with separate ports, domains, users, and workspaces.
+
+### Can AgentDesk run on a homelab?
+
+Yes. AgentDesk works well on homelab machines, small VPS instances, and lab servers when the host has Docker, a reachable domain or tunnel, and enough resources for your tools.
+
+## Screenshots And Assets
+
+The repository would be more star-worthy with visual proof. Recommended assets:
+
+- `assets/screenshot-browser.png`: desktop browser session running an AI coding agent.
+- `assets/screenshot-ipad.png`: tablet view showing AgentDesk in use.
+- `assets/diagram.png`: architecture diagram matching the flow above.
+- `assets/demo.gif`: short demo from login to running `claude` or `codex`.
+- `assets/terminal-workflow.png`: example project workflow in the browser terminal.
 
 ## GitHub Topic Recommendations
 
-`claude-code`, `codex`, `openai-codex`, `hermes`, `opencode`, `openclaw`, `ai-agent`, `coding-agent`, `browser-terminal`, `web-terminal`, `remote-development`, `cloud-ide`, `coolify`, `docker`, `gitops`, `self-hosted`, `ssh`, `cloudflare-access`, `devops`, `vps`
+Suggested repository topics:
 
-## Keywords
+`claude-code`, `codex`, `openai-codex`, `anthropic`, `hermes`, `opencode`, `openclaw`, `ai-agent`, `coding-agent`, `browser-terminal`, `web-terminal`, `remote-development`, `cloud-ide`, `coolify`, `docker`, `gitops`, `ssh`, `self-hosted`, `homelab`, `cloudflare-access`, `developer-tools`, `devops`, `ai-devops`, `docker-workspace`, `self-hosted-ai`
 
-Self-hosted browser workspace, remote development console, browser terminal, web terminal, AI coding agent workspace, secure remote shell, Coolify deployment, GitOps remote development, Cloudflare Access protected terminal, SSH workspace, containerized development environment.
+## Competitive Position
 
-## Support AgentDesk
+AgentDesk overlaps with GitHub Codespaces, Coder, code-server, OpenVSCode Server, ttyd, Theia, Cloud9, and JetBrains Gateway, but its center of gravity is different. It is not trying to be a full IDE platform. It is a small, auditable browser workspace for AI coding agents, remote terminals, and GitOps-native development on your own machine.
 
-AgentDesk is an independent open-source project built to help developers run AI coding agents securely from anywhere.
+What differentiates AgentDesk:
 
-If AgentDesk helped you leave your laptop at home, code from a tablet, recover a few hours of your week, or inspired your own setup, consider supporting its development.
+- AI-agent-first positioning instead of editor-first positioning.
+- Self-hosted control over the machine, shell, credentials, and workspace.
+- Coolify-friendly deployment for people already running GitOps infrastructure.
+- Simple architecture that can be understood quickly.
 
-<a href="https://www.buymeacoffee.com/genildof" target="_blank">
-<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
-alt="Buy Me A Coffee"
-style="height: 60px !important;width: 217px !important;">
-</a>
+What would make it category-leading:
 
-<p align="center">
+- polished screenshots and a short demo GIF
+- one-command bootstrap for common hosts
+- multiple-instance examples for teams and labs
+- optional hardened deployment profiles
+- documented integrations for Cloudflare Access, Tailscale, and common agent CLIs
 
-<a href="https://buymeacoffee.com/genildof">
+## Support
 
-<img
-src="assets/bmc_qr.png"
-alt="Buy Me a Coffee QR Code"
-width="180">
+If AgentDesk saves you time, starring the repository helps other developers find it. Issues and pull requests are welcome when they keep the runtime architecture clear and secure.
 
-</a>
+<a href="https://www.buymeacoffee.com/genildof"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
 
-</p>
+<a href="https://buymeacoffee.com/genildof"><img src="assets/bmc_qr.png" alt="Buy Me A Coffee QR code" width="180"></a>
 
 ## Credits
 
-AgentDesk stands on the shoulders of great open-source projects.
-
-Special thanks to Cp0204 for ttydBridge, which inspired and enabled parts of AgentDesk's remote shell architecture. See [ttydBridge](https://github.com/Cp0204/ttydBridge).
+AgentDesk builds on [ttydBridge](https://github.com/Cp0204/ttydBridge), Caddy, Docker, and the broader self-hosted developer tools ecosystem.
 
 ## License
 
-See [LICENSE](./LICENSE).
-
----
-
-Built with ❤️ for developers running AI agents from anywhere.
-
-⭐ If AgentDesk was useful, consider starring the repository.
-
-☕ Support the project: https://buymeacoffee.com/genildof
+See [LICENSE](./LICENSE) for license details.

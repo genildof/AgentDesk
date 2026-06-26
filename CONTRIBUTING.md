@@ -2,33 +2,67 @@
 
 Thanks for helping improve AgentDesk.
 
-## Guidelines
+AgentDesk is intentionally small. The best contributions improve clarity, security, deployment reliability, and developer experience without making the runtime architecture harder to understand.
 
-- Keep changes honest and practical.
-- Do not add fake metrics, fake production claims, or unsupported compatibility claims.
-- Preserve the working root `docker-compose.yaml` unless the change is intentionally about deployment.
-- Document security implications for anything that exposes a shell or browser workspace.
-- Prefer small, reviewable pull requests.
+## Before You Change Runtime Behavior
 
-## Getting started
+Open an issue first for changes that affect:
 
-1. Fork the repository.
-2. Create a branch for your change.
-3. Make the smallest useful edit.
-4. Test the result locally if applicable.
-5. Submit a pull request with a clear summary.
+- `docker-compose.yaml`
+- routing
+- Caddy
+- ttydBridge
+- authentication
+- healthchecks
+- labels or domains
+- environment variables
+- security boundaries
+- host privileges
+- volumes
 
-## Good contributions
+Documentation-only changes can usually be proposed directly as pull requests.
 
-- docs improvements
-- safer defaults
-- deployment notes
-- troubleshooting notes
-- reproducible examples
+## Documentation Standards
 
-## Before opening a PR
+Use generic examples:
 
-- check for secrets
-- verify links and commands
-- keep the prose accurate
-- update docs if behavior changes
+- `developer`
+- `alice`
+- `bob`
+- `myproject`
+- `project-a`
+- `project-b`
+- `opensource`
+- `clients`
+- `lab`
+
+Avoid organization-specific names, unrelated project names, and environment details that only apply to one deployment.
+
+Always reference the compose file as `docker-compose.yaml`.
+
+## Pull Request Checklist
+
+Before opening a pull request:
+
+- confirm the change is scoped
+- update docs when behavior changes
+- avoid unrelated formatting churn
+- keep examples generic
+- verify links to files and docs
+- explain security implications when relevant
+
+## Local Validation
+
+Useful checks:
+
+```bash
+git diff --stat
+```
+
+```bash
+grep -Ri "docker-compose.yml" README.md docs CONTRIBUTING.md
+```
+
+## Security Reports
+
+Do not include exploitable security details in public issues. Open a minimal issue asking for a secure disclosure channel if no preferred contact path is listed.

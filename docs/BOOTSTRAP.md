@@ -1,68 +1,108 @@
-# Bootstrapping an AgentDesk Development Environment
+# Bootstrap Guide
 
-This document describes a practical Ubuntu 24.04 bootstrap path for an AgentDesk development machine.
+This guide prepares a host for AgentDesk and terminal-native AI coding agents.
 
-## Target environment
+## Target Host
 
-- Ubuntu 24.04
-- NodeJS
-- npm
-- pnpm
-- typescript
-- tsx
-- vite
-- turbo
-- eslint
-- prettier
-- git
-- gh
-- docker
-- docker compose
-- pipx
-- python3
-- venv
-- uv
-- poetry
-- ffmpeg
-- espeak-ng
-- jq
-- curl
-- wget
-- tmux
-- zsh
-- starship
+AgentDesk works well on a VPS, homelab server, lab machine, or workstation that can run Docker and expose a protected web route.
 
-## Example bootstrap commands
+Recommended baseline:
 
-Use `apt` for system packages:
+- Ubuntu 22.04 or 24.04, Debian, or another Docker-capable Linux host
+- Docker and Docker Compose plugin
+- a non-root developer user
+- a persistent workspace directory
+- authenticated edge access before the browser terminal
+
+## Install Common Tools
+
+Install the tools your workflows need. A typical developer host may include:
 
 ```bash
 sudo apt update
-sudo apt install -y   git   curl   wget   jq   ffmpeg   espeak-ng   tmux   zsh   python3   python3-pip   pipx
+sudo apt install -y git curl ca-certificates jq python3 python3-pip pipx nodejs npm
 ```
 
-Enable `pipx` in the current shell session:
+Install package managers or runtimes used by your projects, such as `pnpm`, `uv`, Go, Rust, or language-specific tooling.
+
+## Prepare A Workspace
+
+Create a workspace for development projects:
 
 ```bash
-pipx ensurepath
+mkdir -p ~/workspace/{project-a,project-b,opensource,clients,lab}
 ```
 
-Install common JavaScript tooling:
+Typical layout:
+
+```text
+~/workspace/
+  project-a/
+  project-b/
+  opensource/
+  clients/
+  lab/
+```
+
+## Install AI Coding Agents
+
+Install the agent CLIs you plan to use on the host, then run them inside the AgentDesk browser terminal.
+
+Common commands once installed:
 
 ```bash
-npm install -g   pnpm   typescript   tsx   turbo   vite   eslint   prettier
+cd ~/workspace
+claude
 ```
 
-Install `gh`, `docker`, `docker compose`, `uv`, `poetry`, `starship`, `NodeJS`, and any other platform-specific dependencies following their official Ubuntu 24.04 installation instructions.
+```bash
+cd ~/workspace
+codex
+```
 
-## Agent tooling
+```bash
+cd ~/workspace
+hermes
+```
 
-Install Codex, Claude Code, Hermes, OpenCode, and OpenClaw following their own documentation.
+```bash
+cd ~/workspace
+opencode
+```
 
-These tools typically manage their own runtime dependencies, login flows, and config directories, so it is better to follow the vendor instructions than to guess at a generic install path.
+## Configure AgentDesk
 
-## Workspace preparation
+Create the environment file:
 
-After bootstrapping the system packages, create or select a non-root development account and prepare the workspace layout described in the main README.
+```bash
+cp .env.example .env
+```
 
-That keeps credentials, SSH keys, and tool config in the intended user profile instead of the privileged shell.
+Review `.env` and [`../docker-compose.yaml`](../docker-compose.yaml) before deployment. Keep the compose filename as `docker-compose.yaml`.
+
+## Deploy
+
+For Docker Compose:
+
+```bash
+docker compose -f docker-compose.yaml up -d
+```
+
+For Coolify, see [COOLIFY.md](./COOLIFY.md).
+
+## Verify
+
+After deployment:
+
+1. Open the configured domain.
+2. Authenticate through your access layer.
+3. Confirm the browser terminal loads.
+4. Run `pwd`, `git --version`, and one installed agent CLI.
+5. Confirm your workspace directory is available.
+
+## Operational Notes
+
+- Keep host packages updated.
+- Rotate credentials when access changes.
+- Use separate users and workspaces for separate teams or environments.
+- Do not expose the service without authentication.

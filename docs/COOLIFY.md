@@ -1,152 +1,101 @@
-# Deploying AgentDesk on Coolify
+# Coolify Deployment
 
-AgentDesk is a Coolify-friendly Docker Compose deployment with two services:
+AgentDesk is designed to work cleanly with Coolify and Traefik while preserving a simple browser-to-host-shell path.
 
-- `ttydbridge` runs `ttyd`
-- `ttyd-proxy` runs Caddy
+## Source Of Truth
 
-## Deployment flow
+Use [`../docker-compose.yaml`](../docker-compose.yaml). The compose filename is `docker-compose.yaml`.
 
-1. Add the repository as a new Coolify service.
-2. Use [`docker-compose.yaml`](../docker-compose.yaml) as the canonical compose file.
-3. Set `HTTP_USERNAME` and `HTTP_PASSWORD` in Coolify environment variables.
-4. Optionally set `DEFAULT_USER` and `DEFAULT_WORKSPACE` for the intended developer account and workspace path.
-5. Attach the public domain to `ttyd-proxy` using the internal port, for example `https://agentdesk.example.com:8080`.
-6. Deploy.
-7. Users access `https://agentdesk.example.com`.
+Do not rename examples to `docker-compose.yml` unless the repository file is renamed everywhere.
 
-## Why the domain points to the proxy
-
-The validated path is:
+## Routing Model
 
 ```text
-Internet
-    │
-Cloudflare Access
-(optional)
-    │
-Traefik (Coolify)
-    │
-ttyd-proxy (Caddy :8080)
-    │
-ttydbridge (:2222)
-    │
-Workspace / Host
+Coolify / Traefik
+  -> ttyd-proxy on port 8080
+  -> Caddy
+  -> host.docker.internal:2222
+  -> ttydbridge
+  -> host shell
 ```
 
-Traefik routes to `ttyd-proxy`, and Caddy bridges traffic to `ttydbridge`.
+Coolify should route external traffic to `ttyd-proxy`. The `ttydbridge` service should not be exposed directly.
 
-Traefik cannot reliably reach `ttydbridge` directly in this setup.
+## Coolify Setup
 
-> ⚠️ This is the single most common cause of AgentDesk deployment failures.
+1. Create a new Docker Compose resource in Coolify.
+2. Point Coolify at this repository.
+3. Use [`../docker-compose.yaml`](../docker-compose.yaml) as the compose file.
+4. Configure your domain for the `ttyd-proxy` service.
+5. Put AgentDesk behind authenticated access before exposing it to users.
 
-Do not attach the public domain to `ttydbridge`.
-
-## Security Warning
-
-- Never deploy AgentDesk without `HTTP_USERNAME` and `HTTP_PASSWORD`.
-- Never commit real passwords.
-- Rotate passwords if they appear in logs.
-- Put AgentDesk behind Cloudflare Access, VPN, MFA, or IP allowlists whenever possible.
-- Treat AgentDesk as privileged infrastructure because it can expose shell access through the browser.
-- Configure `HTTP_USERNAME` and `HTTP_PASSWORD` in Coolify environment variables, not hardcoded in `docker-compose.yaml`.
-
-## Coolify Variables
-
-Required:
-
-- `HTTP_USERNAME`
-- `HTTP_PASSWORD`
-
-Optional:
-
-- `DEFAULT_USER`
-- `DEFAULT_WORKSPACE`
-
-Recommended:
-
-- `DEFAULT_USER=<developer-user>`
-- `DEFAULT_WORKSPACE=/home/<developer-user>/workspace`
-
-## Port usage
-
-- `ttydbridge` listens on host port `2222` by default.
-- `ttydbridge` uses `pid: host` and binds to the host network namespace, so only one AgentDesk instance can use `PORT=2222` on the same server.
-- If you deploy multiple AgentDesk instances on the same server, use different `ttydbridge` ports:
-  - production: `2222`
-  - test: `2223`
-  - staging: `2224`
-- `ttyd-proxy` / Caddy listens internally on port `8080`.
-- In Coolify, attach the public domain to `ttyd-proxy` with `:8080`.
-- Example: `https://agentdesk.example.com:8080`
-- Users access: `https://agentdesk.example.com`
-- Do not attach the public domain to `ttydbridge`.
-
-## Common Coolify mistakes
-
-Wrong:
+Example service mapping:
 
 ```text
-ttydbridge
-https://agentdesk.example.com
+Service: ttyd-proxy
+Public route: https://agentdesk.example.com
+Internal port: 8080
 ```
 
-Correct:
+Users should visit the public route, not the internal `:8080` URL.
+
+## Health And Routing
+
+Coolify should healthcheck the browser-facing proxy, not ttydBridge directly. The proxy proves that the public route can reach Caddy. ttydBridge remains an internal part of the request path.
+
+If Coolify reports a routing issue, verify:
+
+- the public route targets `ttyd-proxy`
+- the public route uses port `8080`
+- Caddy can reach `host.docker.internal:2222`
+- ttydBridge is listening on the expected host-side port
+- your edge authentication is not blocking Coolify's route setup
+
+## Common Errors
+
+### 502 Bad Gateway
+
+Likely causes:
+
+- `ttydbridge` is not reachable from Caddy
+- ttydBridge is not listening on the expected port
+- host networking or `host.docker.internal` resolution is unavailable
+
+### 504 Gateway Timeout
+
+Likely causes:
+
+- ttydBridge started slowly
+- host firewall rules block the bridge port
+- the host shell or workspace path is unavailable
+
+### Address already in use
+
+Likely causes:
+
+- another AgentDesk instance already uses the same ttydBridge port
+- a different process is bound to the same host port
+
+Use separate ports for separate instances, for example `2222`, `2223`, and `2224`.
+
+## Multiple Instances
+
+For multiple AgentDesk instances, isolate:
+
+- domain
+- host-side port
+- user
+- workspace
+- credentials or edge access policy
+
+Example intent:
 
 ```text
-ttyd-proxy
-https://agentdesk.example.com:8080
+agentdesk-a.example.com -> workspace project-a
+agentdesk-b.example.com -> workspace project-b
+agentdesk-lab.example.com -> workspace lab
 ```
 
-## Health and routing
+## Security Reminder
 
-Coolify can show two different states here:
-
-- `Running (unknown)` means no effective healthcheck is being evaluated.
-- `Running (unhealthy)` means a healthcheck exists but is failing.
-
-AgentDesk should healthcheck `ttyd-proxy` on port `8080` only.
-
-`ttydbridge` should not be healthchecked directly because that can produce false negatives.
-
-- `ttyd-proxy` healthcheck probes `http://127.0.0.1:8080/`
-- `ttydbridge` is not healthchecked directly
-- Authentication stays enabled; the proxy healthcheck does not need credentials
-
-## Common 502 / 504 troubleshooting
-
-If you see `502 Bad Gateway`, `504 Gateway Timeout`, `connection refused`, or `lws_socket_bind ERROR on binding fd 12 to port 2222 (-1 98)`:
-
-- confirm the domain is attached to `ttyd-proxy`
-- confirm the Coolify domain uses `:8080`
-- confirm `ttydbridge` is not already running on `2222`
-- confirm `PORT` is free on the host
-- confirm Caddy starts successfully
-- confirm `ttydbridge` is listening on the selected port
-
-What `lws_socket_bind ... 98` means:
-
-- the `ttydbridge` port is already in use
-- another AgentDesk or `ttyd` instance is already bound to that host port
-
-Fix:
-
-- change `PORT` to `2223`, `2224`, or another free port
-- update the Caddy `reverse_proxy` target to match the new port
-- keep the domain attached to `ttyd-proxy`, not `ttydbridge`
-
-## Confirm backend reachability
-
-Use `curl` or `wget` from the host or from a container with network visibility:
-
-```bash
-curl -v http://127.0.0.1:8080
-curl -v http://host.docker.internal:2222
-wget -S -O - http://127.0.0.1:8080
-```
-
-If the proxy is healthy but the backend is not reachable, check `ttydbridge` logs and host-side service state.
-
-## Practical note
-
-The current compose file depends on the existing Coolify network and routing behavior. Preserve that model unless you are intentionally redesigning the deployment.
+AgentDesk exposes a shell. Do not publish it as an unauthenticated public service. Use an authenticated edge such as Cloudflare Access, Tailscale, WireGuard, a VPN, or a trusted reverse proxy access policy.
