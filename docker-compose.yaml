@@ -41,7 +41,7 @@ services:
       PORT: '2222'
       EXEC_DIR: /opt
       START_COMMAND: >-
-        bash -lc 'if [ -n "$${DEFAULT_USER:-}" ]; then workspace="$${DEFAULT_WORKSPACE:-/home/$${DEFAULT_USER}}"; exec su - "$${DEFAULT_USER}" -c "cd \"$${workspace}\" && exec bash"; fi; cd "$${DEFAULT_WORKSPACE:-/}" && exec bash'
+        bash -lc 'if [ -n "$${DEFAULT_USER:-}" ]; then workspace="$${DEFAULT_WORKSPACE:-/home/$${DEFAULT_USER}}"; exec su - "$${DEFAULT_USER}" -c "cd \"$${workspace}\" && exec bash +m"; fi; cd "$${DEFAULT_WORKSPACE:-/}" && exec bash +m'
       ENABLE_SSL: 'false'
       DEFAULT_USER: '${DEFAULT_USER:-}'
       DEFAULT_WORKSPACE: '${DEFAULT_WORKSPACE:-}'
