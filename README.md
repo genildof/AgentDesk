@@ -36,7 +36,7 @@ Browser
   -> host shell
 ```
 
-The working compose file is [`docker-compose.yaml`](./docker-compose.yaml). Do not rename it to `docker-compose.yml` in docs, automation, or examples.
+The working compose file is [`docker-compose.yaml`](./docker-compose.yaml). Do not rename it to `docker-compose.yml` in docs, automation, or examples. For Coolify on another VPS, use [`docker-compose.proxy.yaml`](./docker-compose.proxy.yaml) on Coolify and [`docker-compose.bridge.yaml`](./docker-compose.bridge.yaml) on the workspace VPS.
 
 ## Features
 
@@ -96,6 +96,10 @@ Public domain: https://agentdesk.example.com
 Service: ttyd-proxy
 Port: 8080
 ```
+
+For the split Tailscale setup, set `BRIDGE_ENDPOINT` in Coolify to the
+workspace VPS address, such as `100.x.y.z:2222`. Codex then runs on the
+workspace VPS while Coolify only serves the browser endpoint.
 
 ## Common Workflows
 

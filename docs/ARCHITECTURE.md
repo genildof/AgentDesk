@@ -9,7 +9,7 @@ Browser
   -> Coolify / Traefik
   -> ttyd-proxy on port 8080
   -> Caddy
-  -> host.docker.internal:2222
+  -> `BRIDGE_ENDPOINT` (host.docker.internal:2222 locally, Tailscale IP remotely)
   -> ttydbridge
   -> host shell
 ```
@@ -36,7 +36,7 @@ Caddy is the lightweight reverse proxy inside the `ttyd-proxy` service. It keeps
 
 ### Host Shell
 
-The host shell is where developer tools and AI coding agents run. Typical commands include `claude`, `codex`, `hermes`, `opencode`, and regular shell, Git, Docker, and editor workflows.
+The host shell is where developer tools and AI coding agents run. Typical commands include `claude`, `codex`, `hermes`, `opencode`, and regular shell, Git, Docker, and editor workflows. In split mode this is the workspace VPS, not the Coolify VPS.
 
 ## Ports
 

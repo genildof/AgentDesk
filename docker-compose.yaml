@@ -9,7 +9,7 @@ services:
     command:
       - sh
       - '-c'
-      - "printf ':8080 {\\n  reverse_proxy host.docker.internal:2222\\n}\\n' > /etc/caddy/Caddyfile\ncaddy run --config /etc/caddy/Caddyfile --adapter caddyfile\n"
+      - "printf ':8080 {\\n  reverse_proxy %s\\n}\\n' \"$${BRIDGE_ENDPOINT:-host.docker.internal:2222}\" > /etc/caddy/Caddyfile\ncaddy run --config /etc/caddy/Caddyfile --adapter caddyfile\n"
     expose:
       - '8080'
     networks:
@@ -40,13 +40,14 @@ services:
     environment:
       PORT: '2222'
       EXEC_DIR: /opt
+      ALLOW_WRITE: '${ALLOW_WRITE:-true}'
       START_COMMAND: >-
         bash -lc 'if [ -n "$${DEFAULT_USER:-}" ]; then workspace="$${DEFAULT_WORKSPACE:-/home/$${DEFAULT_USER}}"; exec su - "$${DEFAULT_USER}" -c "cd \"$${workspace}\" && exec bash +m"; fi; cd "$${DEFAULT_WORKSPACE:-/}" && exec bash +m'
       ENABLE_SSL: 'false'
       DEFAULT_USER: '${DEFAULT_USER:-}'
       DEFAULT_WORKSPACE: '${DEFAULT_WORKSPACE:-}'
-      HTTP_USERNAME: '${HTTP_USERNAME}'
-      HTTP_PASSWORD: '${HTTP_PASSWORD}'
+      HTTP_USERNAME: '${HTTP_USERNAME:-}'
+      HTTP_PASSWORD: '${HTTP_PASSWORD:-}'
     volumes:
       - '/opt:/opt'
     expose:

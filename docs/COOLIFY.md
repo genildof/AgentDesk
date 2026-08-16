@@ -21,11 +21,31 @@ Coolify / Traefik
 
 Coolify should route external traffic to `ttyd-proxy`. The `ttydbridge` service should not be exposed directly.
 
+## Coolify On Another VPS (Tailscale)
+
+If Coolify runs on a different VPS from the workspace, deploy
+`docker-compose.bridge.yaml` on the workspace VPS and
+`docker-compose.proxy.yaml` as the Coolify resource. Deploying the full stack
+on Coolify would execute Codex on the Coolify VPS instead.
+
+Set these variables in the Coolify proxy resource:
+
+```text
+DOMAIN=agentdesk.example.com
+BRIDGE_ENDPOINT=100.x.y.z:2222
+```
+
+Replace `100.x.y.z` with the Tailscale IP of the workspace VPS. Restrict TCP
+`2222` on the workspace VPS to the Coolify VPS's Tailscale IP. Do not publish
+`2222` through Coolify or the public internet.
+
 ## Coolify Setup
 
 1. Create a new Docker Compose resource in Coolify.
 2. Point Coolify at this repository.
-3. Use [`../docker-compose.yaml`](../docker-compose.yaml) as the compose file.
+3. Use [`../docker-compose.yaml`](../docker-compose.yaml) for a same-host
+   deployment, or [`../docker-compose.proxy.yaml`](../docker-compose.proxy.yaml)
+   for the split Tailscale deployment.
 4. Configure your domain for the `ttyd-proxy` service.
 5. Put AgentDesk behind authenticated access before exposing it to users.
 
@@ -47,7 +67,7 @@ If Coolify reports a routing issue, verify:
 
 - the public route targets `ttyd-proxy`
 - the public route uses port `8080`
-- Caddy can reach `host.docker.internal:2222`
+- Caddy can reach the configured `BRIDGE_ENDPOINT`
 - ttydBridge is listening on the expected host-side port
 - your edge authentication is not blocking Coolify's route setup
 
