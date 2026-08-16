@@ -1,108 +1,70 @@
-# Bootstrap Guide
+# Bootstrap guide
 
-This guide prepares a host for AgentDesk and terminal-native AI coding agents.
+This guide prepares the remote VPS where Codex and your projects will run.
+AgentDesk itself can then be deployed as a normal Compose application in Coolify.
 
-## Target Host
-
-AgentDesk works well on a VPS, homelab server, lab machine, or workstation that can run Docker and expose a protected web route.
+## Remote Codex VPS
 
 Recommended baseline:
 
-- Ubuntu 22.04 or 24.04, Debian, or another Docker-capable Linux host
-- Docker and Docker Compose plugin
-- a non-root developer user
-- a persistent workspace directory
-- authenticated edge access before the browser terminal
+- Ubuntu 22.04/24.04, Debian, or another Docker-capable Linux distribution.
+- Tailscale connected to the same tailnet as Coolify.
+- OpenSSH server enabled.
+- A dedicated non-root user and persistent workspace.
 
-## Install Common Tools
-
-Install the tools your workflows need. A typical developer host may include:
+Install common tools:
 
 ```bash
 sudo apt update
-sudo apt install -y git curl ca-certificates jq python3 python3-pip pipx nodejs npm
+sudo apt install -y openssh-server git curl ca-certificates jq tmux
 ```
 
-Install package managers or runtimes used by your projects, such as `pnpm`, `uv`, Go, Rust, or language-specific tooling.
-
-## Prepare A Workspace
-
-Create a workspace for development projects:
+Create a user and workspace:
 
 ```bash
-mkdir -p ~/workspace/{project-a,project-b,opensource,clients,lab}
+sudo adduser codex
+sudo -u codex mkdir -p /home/codex/workspace
 ```
 
-Typical layout:
-
-```text
-~/workspace/
-  project-a/
-  project-b/
-  opensource/
-  clients/
-  lab/
-```
-
-## Install AI Coding Agents
-
-Install the agent CLIs you plan to use on the host, then run them inside the AgentDesk browser terminal.
-
-Common commands once installed:
+Install the agent CLIs on this VPS and verify:
 
 ```bash
-cd ~/workspace
-claude
+sudo -u codex -H bash -lc 'cd ~/workspace && codex --version'
 ```
+
+## SSH key
+
+Generate a dedicated key on a trusted machine or in Coolify's deployment
+environment:
 
 ```bash
-cd ~/workspace
-codex
+ssh-keygen -t ed25519 -f agentdesk_codex -C agentdesk-codex
 ```
+
+Add `agentdesk_codex.pub` to the remote user's `~/.ssh/authorized_keys`.
+Store the private key as `SSH_PRIVATE_KEY` in Coolify, never in Git.
+
+## Known hosts
+
+From a trusted machine:
 
 ```bash
-cd ~/workspace
-hermes
+ssh-keyscan -H 100.64.0.12
 ```
+
+Review the fingerprint and save the complete output as `SSH_KNOWN_HOSTS` in
+Coolify.
+
+## Verify before Coolify
 
 ```bash
-cd ~/workspace
-opencode
+ssh -i agentdesk_codex codex@100.64.0.12
 ```
 
-## Configure AgentDesk
+Then run `whoami`, `hostname`, and `codex --version`.
 
-Create the environment file:
+## Coolify
 
-```bash
-cp .env.example .env
-```
-
-Review `.env` and [`../docker-compose.yaml`](../docker-compose.yaml) before deployment. Keep the compose filename as `docker-compose.yaml`.
-
-## Deploy
-
-For Docker Compose:
-
-```bash
-docker compose -f docker-compose.yaml up -d
-```
-
-For Coolify, see [COOLIFY.md](./COOLIFY.md).
-
-## Verify
-
-After deployment:
-
-1. Open the configured domain.
-2. Authenticate through your access layer.
-3. Confirm the browser terminal loads.
-4. Run `pwd`, `git --version`, and one installed agent CLI.
-5. Confirm your workspace directory is available.
-
-## Operational Notes
-
-- Keep host packages updated.
-- Rotate credentials when access changes.
-- Use separate users and workspaces for separate teams or environments.
-- Do not expose the service without authentication.
+Deploy the repository using `docker-compose.yaml`, service `agentdesk`, and
+port `8080`. Copy the variables from `.env.example` into the Coolify resource.
+The detailed reference is in [COOLIFY.md](./COOLIFY.md).

@@ -1,56 +1,40 @@
 # Security
 
-AgentDesk exposes a browser-accessible shell. Treat it with the same care as SSH access to the host.
+AgentDesk exposes an interactive SSH shell through a browser. Treat it as
+remote shell access, not as a sandbox.
 
-## Recommended Deployment
+## Recommended baseline
 
-Use at least one authenticated access layer before users reach AgentDesk:
+- HTTPS at Coolify or another trusted edge.
+- Tailscale or a private network between Coolify and the remote VPS.
+- A dedicated, non-root Linux user on the remote VPS.
+- A dedicated SSH key with no broader access than necessary.
+- `SSH_STRICT_HOST_KEY_CHECKING=yes` and a pinned `SSH_KNOWN_HOSTS` value.
+- Strong optional `WEB_USERNAME` and `WEB_PASSWORD` values.
+- No secrets committed to Git.
 
-- Cloudflare Access
-- Tailscale
-- WireGuard
-- VPN
-- trusted reverse proxy with HTTPS and access control
+## Private keys
 
-Recommended baseline:
+`SSH_PRIVATE_KEY` is passed to the container as a Coolify secret and written
+only to a runtime file with mode `0600`. Rotate the key if the Coolify
+resource, VPS, or operators change.
 
-1. HTTPS at the edge.
-2. Authenticated access before the browser terminal loads.
-3. Strong credentials when HTTP authentication is enabled.
-4. Non-root day-to-day user for development work.
-5. Limited access to trusted operators only.
+Never place a private key in `.env.example`, issues, screenshots, logs, or a
+public repository.
 
-## What Not To Do
+## Remote user
 
-Do not expose AgentDesk as an unauthenticated public internet service.
+The remote user can execute commands, read its files, access its credentials,
+and modify its projects. Do not connect AgentDesk to a root account or use it
+for untrusted users without an additional isolation layer.
 
-Do not treat the browser terminal as a sandbox for untrusted users.
+## Host-key verification
 
-Do not run unknown workloads unless you would also run them in a normal SSH session on the same host.
+Keep `SSH_STRICT_HOST_KEY_CHECKING=yes`. Generate `SSH_KNOWN_HOSTS` from a
+trusted network and review the fingerprint before saving it in Coolify.
 
-## Threat Model
+## What AgentDesk does not do
 
-AgentDesk is intended for trusted developers and operators who need remote browser access to a development shell. The main risks are the same risks as remote shell access:
-
-- credential theft
-- weak access control
-- exposed public endpoints
-- command execution by an unauthorized user
-- accidental changes to host files or services
-- secrets visible in the terminal environment
-
-## Secrets
-
-Keep secrets out of screenshots, logs, issues, and demo recordings. Avoid pasting API keys into public bug reports.
-
-If you suspect a secret was exposed, rotate it immediately.
-
-## Network Exposure
-
-The recommended public entrypoint is the browser-facing proxy service behind an authenticated edge. Do not expose internal bridge ports directly to the public internet.
-
-For Coolify deployment notes, see [COOLIFY.md](./COOLIFY.md).
-
-## Reporting Security Issues
-
-Please avoid filing public issues for exploitable security reports. Use the repository owner's preferred private contact path if one is listed on GitHub, or open a minimal issue asking for a secure disclosure channel without including exploit details.
+AgentDesk does not provide multi-tenant isolation, project sandboxing, user
+management, or an OpenAI API proxy. Those concerns belong to the deployment
+edge and the remote operating system.

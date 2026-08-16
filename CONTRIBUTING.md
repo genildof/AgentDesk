@@ -1,68 +1,33 @@
 # Contributing
 
-Thanks for helping improve AgentDesk.
+AgentDesk is intentionally small. Contributions should improve clarity,
+security, deployment reliability, or browser-terminal usability without
+making Coolify deployment harder to understand.
 
-AgentDesk is intentionally small. The best contributions improve clarity, security, deployment reliability, and developer experience without making the runtime architecture harder to understand.
+## Runtime changes
 
-## Before You Change Runtime Behavior
+Open an issue before changing `docker-compose.yaml`, the Docker image,
+authentication, SSH behavior, healthchecks, environment variables, or security
+boundaries. Documentation-only changes can be proposed directly.
 
-Open an issue first for changes that affect:
+## Standards
 
-- `docker-compose.yaml`
-- routing
-- Caddy
-- ttydBridge
-- authentication
-- healthchecks
-- labels or domains
-- environment variables
-- security boundaries
-- host privileges
-- volumes
+- Keep `docker-compose.yaml` as the canonical deployment file.
+- Keep examples compatible with a standard Coolify Docker Compose resource.
+- Use generic names such as `developer`, `project-a`, and `example.com`.
+- Never include private keys, passwords, or real infrastructure addresses.
+- Document every new environment variable in `.env.example` and
+  `docs/COOLIFY.md`.
 
-Documentation-only changes can usually be proposed directly as pull requests.
-
-## Documentation Standards
-
-Use generic examples:
-
-- `developer`
-- `alice`
-- `bob`
-- `myproject`
-- `project-a`
-- `project-b`
-- `opensource`
-- `clients`
-- `lab`
-
-Avoid organization-specific names, unrelated project names, and environment details that only apply to one deployment.
-
-Always reference the compose file as `docker-compose.yaml`.
-
-## Pull Request Checklist
-
-Before opening a pull request:
-
-- confirm the change is scoped
-- update docs when behavior changes
-- avoid unrelated formatting churn
-- keep examples generic
-- verify links to files and docs
-- explain security implications when relevant
-
-## Local Validation
-
-Useful checks:
+## Local validation
 
 ```bash
-git diff --stat
+docker compose config
+sh -n docker/entrypoint.sh
+git diff --check
 ```
 
-```bash
-grep -Ri "docker-compose.yml" README.md docs CONTRIBUTING.md
-```
+## Security reports
 
-## Security Reports
-
-Do not include exploitable security details in public issues. Open a minimal issue asking for a secure disclosure channel if no preferred contact path is listed.
+Do not include exploitable security details in public issues. Use the
+repository owner's private disclosure channel when available.

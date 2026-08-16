@@ -1,121 +1,76 @@
-# Coolify Deployment
+# Coolify deployment
 
-AgentDesk is designed to work cleanly with Coolify and Traefik while preserving a simple browser-to-host-shell path.
+AgentDesk is designed to run as a normal Coolify Docker Compose resource.
 
-## Source Of Truth
+## Resource configuration
 
-Use [`../docker-compose.yaml`](../docker-compose.yaml). The compose filename is `docker-compose.yaml`.
-
-Do not rename examples to `docker-compose.yml` unless the repository file is renamed everywhere.
-
-## Routing Model
+Create a Docker Compose resource with:
 
 ```text
-Coolify / Traefik
-  -> ttyd-proxy on port 8080
-  -> Caddy
-  -> host.docker.internal:2222
-  -> ttydbridge
-  -> host shell
+Repository: your AgentDesk repository
+Branch: main
+Compose file: docker-compose.yaml
+Service: agentdesk
+Port: 8080
+Domain: https://agentdesk.example.com
 ```
 
-Coolify should route external traffic to `ttyd-proxy`. The `ttydbridge` service should not be exposed directly.
+The Compose file uses `build`, `expose`, a healthcheck, and no external Docker
+network. It does not require `privileged`, host networking, host mounts, or the
+Docker socket.
 
-## Coolify On Another VPS (Tailscale)
+## Environment variables
 
-If Coolify runs on a different VPS from the workspace, deploy
-`docker-compose.bridge.yaml` on the workspace VPS and
-`docker-compose.proxy.yaml` as the Coolify resource. Deploying the full stack
-on Coolify would execute Codex on the Coolify VPS instead.
+Configure these in Coolify. Mark private key and authentication values as
+secrets.
 
-Set these variables in the Coolify proxy resource:
+| Variable | Required | Example | Purpose |
+| --- | --- | --- | --- |
+| `PORT` | no | `8080` | Internal web port. Keep aligned with the service port. |
+| `WEB_USERNAME` | no | `admin` | Optional browser-terminal username. |
+| `WEB_PASSWORD` | no | secret | Optional browser-terminal password. Set both web variables together. |
+| `SSH_HOST` | yes | `100.64.0.12` | Tailscale IP or DNS name of the Codex VPS. |
+| `SSH_PORT` | yes | `22` | SSH port on the remote VPS. |
+| `SSH_USER` | yes | `codex` | Remote Linux user. |
+| `SSH_PRIVATE_KEY` | yes | multiline secret | Private key for the remote user. |
+| `SSH_KNOWN_HOSTS` | yes | multiline secret | Pinned SSH host key. |
+| `SSH_STRICT_HOST_KEY_CHECKING` | no | `yes` | Keep enabled in production. |
+| `SSH_SESSION_PERSISTENT` | no | `false` | Use a persistent remote tmux session. |
+| `SSH_SESSION_NAME` | no | `agentdesk` | tmux session name. |
+| `SSH_REMOTE_COMMAND` | no | empty | Custom command instead of a normal shell. |
 
-```text
-DOMAIN=agentdesk.example.com
-BRIDGE_ENDPOINT=100.x.y.z:2222
+Generate the pinned host key from a trusted machine:
+
+```bash
+ssh-keyscan -H 100.64.0.12
 ```
 
-Replace `100.x.y.z` with the Tailscale IP of the workspace VPS. Restrict TCP
-`2222` on the workspace VPS to the Coolify VPS's Tailscale IP. Do not publish
-`2222` through Coolify or the public internet.
+Copy the complete output to `SSH_KNOWN_HOSTS`. Do not use
+`SSH_STRICT_HOST_KEY_CHECKING=no` except for temporary debugging.
 
-## Coolify Setup
+## Tailscale requirements
 
-1. Create a new Docker Compose resource in Coolify.
-2. Point Coolify at this repository.
-3. Use [`../docker-compose.yaml`](../docker-compose.yaml) for a same-host
-   deployment, or [`../docker-compose.proxy.yaml`](../docker-compose.proxy.yaml)
-   for the split Tailscale deployment.
-4. Configure your domain for the `ttyd-proxy` service.
-5. Put AgentDesk behind authenticated access before exposing it to users.
+The Coolify host or the AgentDesk container must be able to route to the
+remote Tailscale address. Verify from the Coolify host:
 
-Example service mapping:
-
-```text
-Service: ttyd-proxy
-Public route: https://agentdesk.example.com
-Internal port: 8080
+```bash
+tailscale ping 100.64.0.12
+nc -vz 100.64.0.12 22
 ```
 
-Users should visit the public route, not the internal `:8080` URL.
+If the Coolify host is not a Tailscale node, install Tailscale on it or use a
+Tailscale subnet router. Docker containers normally inherit the host's routes;
+firewall and forwarding rules must allow the connection.
 
-## Health And Routing
+## Deployment checks
 
-Coolify should healthcheck the browser-facing proxy, not ttydBridge directly. The proxy proves that the public route can reach Caddy. ttydBridge remains an internal part of the request path.
+After deployment:
 
-If Coolify reports a routing issue, verify:
+1. Open the HTTPS domain.
+2. Confirm the terminal appears.
+3. Run `whoami` and `hostname`.
+4. Run `codex --version`.
+5. Confirm the hostname is the remote Codex VPS.
 
-- the public route targets `ttyd-proxy`
-- the public route uses port `8080`
-- Caddy can reach the configured `BRIDGE_ENDPOINT`
-- ttydBridge is listening on the expected host-side port
-- your edge authentication is not blocking Coolify's route setup
-
-## Common Errors
-
-### 502 Bad Gateway
-
-Likely causes:
-
-- `ttydbridge` is not reachable from Caddy
-- ttydBridge is not listening on the expected port
-- host networking or `host.docker.internal` resolution is unavailable
-
-### 504 Gateway Timeout
-
-Likely causes:
-
-- ttydBridge started slowly
-- host firewall rules block the bridge port
-- the host shell or workspace path is unavailable
-
-### Address already in use
-
-Likely causes:
-
-- another AgentDesk instance already uses the same ttydBridge port
-- a different process is bound to the same host port
-
-Use separate ports for separate instances, for example `2222`, `2223`, and `2224`.
-
-## Multiple Instances
-
-For multiple AgentDesk instances, isolate:
-
-- domain
-- host-side port
-- user
-- workspace
-- credentials or edge access policy
-
-Example intent:
-
-```text
-agentdesk-a.example.com -> workspace project-a
-agentdesk-b.example.com -> workspace project-b
-agentdesk-lab.example.com -> workspace lab
-```
-
-## Security Reminder
-
-AgentDesk exposes a shell. Do not publish it as an unauthenticated public service. Use an authenticated edge such as Cloudflare Access, Tailscale, WireGuard, a VPN, or a trusted reverse proxy access policy.
+A container restart can be used to verify that SSH credentials and environment
+variables are complete.

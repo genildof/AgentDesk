@@ -1,0 +1,11 @@
+.git
+.github
+.serena
+.env
+.env.*
+!.env.example
+assets
+docs
+*.log
+tmp
+temp

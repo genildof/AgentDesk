@@ -1,59 +1,29 @@
 services:
-  ttyd-proxy:
-    image: 'caddy:2-alpine'
+  agentdesk:
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
-    depends_on:
-      - ttydbridge
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-    command:
-      - sh
-      - '-c'
-      - "printf ':8080 {\\n  reverse_proxy %s\\n}\\n' \"$${BRIDGE_ENDPOINT:-host.docker.internal:2222}\" > /etc/caddy/Caddyfile\ncaddy run --config /etc/caddy/Caddyfile --adapter caddyfile\n"
     expose:
       - '8080'
-    networks:
-      - coolify
+    environment:
+      PORT: '${PORT:-8080}'
+      WEB_USERNAME: '${WEB_USERNAME:-}'
+      WEB_PASSWORD: '${WEB_PASSWORD:-}'
+      SSH_HOST: '${SSH_HOST:-}'
+      SSH_PORT: '${SSH_PORT:-22}'
+      SSH_USER: '${SSH_USER:-}'
+      SSH_PRIVATE_KEY: '${SSH_PRIVATE_KEY:-}'
+      SSH_KNOWN_HOSTS: '${SSH_KNOWN_HOSTS:-}'
+      SSH_STRICT_HOST_KEY_CHECKING: '${SSH_STRICT_HOST_KEY_CHECKING:-yes}'
+      SSH_REMOTE_COMMAND: '${SSH_REMOTE_COMMAND:-}'
+      SSH_SESSION_PERSISTENT: '${SSH_SESSION_PERSISTENT:-false}'
+      SSH_SESSION_NAME: '${SSH_SESSION_NAME:-agentdesk}'
     healthcheck:
       test:
         - CMD-SHELL
-        - "wget -S -O /dev/null http://127.0.0.1:8080/ 2>&1 | grep -E 'HTTP/.* (200|401|403)' >/dev/null"
+        - "wget -q -O /dev/null http://127.0.0.1:$${PORT:-8080}/"
       interval: 30s
       timeout: 5s
       retries: 5
-      start_period: 30s
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=coolify
-      - traefik.http.routers.ttyd-proxy.rule=Host(`${DOMAIN:-agentdesk.example.com}`)
-      - traefik.http.routers.ttyd-proxy.entrypoints=https
-      - traefik.http.routers.ttyd-proxy.tls=true
-      - traefik.http.routers.ttyd-proxy.priority=999999
-      - traefik.http.routers.ttyd-proxy.service=ttyd-proxy-svc
-      - traefik.http.services.ttyd-proxy-svc.loadbalancer.server.port=8080
-  ttydbridge:
-    image: 'cp0204/ttydbridge:latest'
-    restart: unless-stopped
-    privileged: true
-    pid: host
-    ipc: host
-    environment:
-      PORT: '2222'
-      EXEC_DIR: /opt
-      ALLOW_WRITE: '${ALLOW_WRITE:-true}'
-      START_COMMAND: >-
-        bash -lc 'if [ -n "$${DEFAULT_USER:-}" ]; then workspace="$${DEFAULT_WORKSPACE:-/home/$${DEFAULT_USER}}"; exec su - "$${DEFAULT_USER}" -c "cd \"$${workspace}\" && exec bash +m"; fi; cd "$${DEFAULT_WORKSPACE:-/}" && exec bash +m'
-      ENABLE_SSL: 'false'
-      DEFAULT_USER: '${DEFAULT_USER:-}'
-      DEFAULT_WORKSPACE: '${DEFAULT_WORKSPACE:-}'
-      HTTP_USERNAME: '${HTTP_USERNAME:-}'
-      HTTP_PASSWORD: '${HTTP_PASSWORD:-}'
-    volumes:
-      - '/opt:/opt'
-    expose:
-      - '2222'
-    networks:
-      - coolify
-networks:
-  coolify:
-    external: true
+      start_period: 15s
