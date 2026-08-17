@@ -91,6 +91,16 @@ AgentDesk exposes a shell with the permissions of `SSH_USER`. Use a dedicated
 Linux user, a dedicated SSH key, HTTPS, Tailscale or another authenticated
 edge, and host-key verification. Read [`docs/SECURITY.md`](docs/SECURITY.md).
 
+## Support
+
+If AgentDesk saves you time, starring the repository helps other developers
+find it. Issues and pull requests are welcome when they improve clarity,
+security, and deployment reliability.
+
+<a href="https://www.buymeacoffee.com/genildof"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+<a href="https://buymeacoffee.com/genildof"><img src="assets/bmc_qr.png" alt="Buy Me A Coffee QR code" width="180"></a>
+
 ## License
 
 See [`LICENSE`](LICENSE).
